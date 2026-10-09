@@ -4,6 +4,20 @@ from sqlalchemy.orm import Session
 import models
 from database import engine, SessionLocal
 
+from pydantic import BaseModel
+from pwdlib import PasswordHash
+
+from datetime import datetime, timedelta, timezone
+import jwt
+
+
+import os
+from dotenv import load_dotenv
+
+load_dotenv()
+
+
+
 app = FastAPI()
 models.Base.metadata.create_all(bind=engine)
 
@@ -14,6 +28,39 @@ def get_db():
     finally:
         db.close()
 
+
+
+password_hash = PasswordHash.recommended()
+
+
+class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
+@app.post("/signup")
+def signup(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(models.User).filter(
+        models.User.username == user.username
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Username already exists")
+
+    new_user = models.User(
+        username=user.username,
+        hashed_password=password_hash.hash(user.password)
+    )
+
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+
+    return {
+        "id": new_user.id,
+        "username": new_user.username,
+        "message": "User registered successfully"
+    }
 
 @app.get("/tasks")
 def get_tasks():
@@ -73,3 +120,43 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Task deleted"}
+
+
+
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is missing. Check your .env file.")
+
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
+
+
+@app.post("/login")
+def login(user: UserCreate, db: Session = Depends(get_db)):
+    existing_user = db.query(models.User).filter(
+        models.User.username == user.username
+    ).first()
+
+    if not existing_user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    if not password_hash.verify(user.password, existing_user.hashed_password):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+
+    expire = datetime.now(timezone.utc) + timedelta(
+        minutes=ACCESS_TOKEN_EXPIRE_MINUTES
+    )
+
+    token = jwt.encode(
+        {"sub": existing_user.username, "exp": expire},
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
