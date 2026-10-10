@@ -118,12 +118,17 @@ def get_current_user(
 
 
 
+
 @app.get("/tasks")
 def get_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    return db.query(models.Task).all()
+    return db.query(models.Task).filter(
+        models.Task.user_id == current_user.id
+    ).all()
+
+
 
 
 
@@ -133,7 +138,11 @@ def create_task(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
-    new_task = models.Task(title=title, done=False)
+    new_task = models.Task(
+        title=title,
+        done=False,
+        user_id=current_user.id
+    )
 
     db.add(new_task)
     db.commit()
@@ -142,23 +151,38 @@ def create_task(
     return new_task
 
 
+
+
 @app.get("/tasks/{task_id}")
-def get_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+def get_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+        models.Task.user_id == current_user.id
+    ).first()
 
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
     return task
 
+
+
 @app.put("/tasks/{task_id}")
 def update_task(
     task_id: int,
     title: str = None,
     done: bool = None,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+        models.Task.user_id == current_user.id
+    ).first()
 
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -171,13 +195,21 @@ def update_task(
 
     db.commit()
     db.refresh(task)
-
     return task
 
 
+
+
 @app.delete("/tasks/{task_id}")
-def delete_task(task_id: int, db: Session = Depends(get_db)):
-    task = db.query(models.Task).filter(models.Task.id == task_id).first()
+def delete_task(
+    task_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    task = db.query(models.Task).filter(
+        models.Task.id == task_id,
+        models.Task.user_id == current_user.id
+    ).first()
 
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
@@ -186,7 +218,6 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
     db.commit()
 
     return {"message": "Task deleted"}
-
 
 
 
