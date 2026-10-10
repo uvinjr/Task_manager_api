@@ -15,7 +15,7 @@ from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
-from schemas import TaskCreate,TaskResponse
+from schemas import TaskCreate, TaskResponse, TaskUpdate
 
 
 import os
@@ -177,11 +177,11 @@ def get_task(
 
 
 
+
 @app.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
-    title: str = None,
-    done: bool = None,
+    task_update: TaskUpdate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
@@ -193,15 +193,17 @@ def update_task(
     if task is None:
         raise HTTPException(status_code=404, detail="Task not found")
 
-    if title is not None:
-        task.title = title
+    if task_update.title is not None:
+        task.title = task_update.title
 
-    if done is not None:
-        task.done = done
+    if task_update.done is not None:
+        task.done = task_update.done
 
     db.commit()
     db.refresh(task)
+
     return task
+
 
 
 
