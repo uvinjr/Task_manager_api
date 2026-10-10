@@ -14,6 +14,10 @@ import jwt
 from fastapi import Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
+
+from schemas import TaskCreate,TaskResponse
+
+
 import os
 from dotenv import load_dotenv
 
@@ -119,7 +123,7 @@ def get_current_user(
 
 
 
-@app.get("/tasks")
+@app.get("/tasks", response_model=list[TaskResponse])
 def get_tasks(
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
@@ -132,14 +136,15 @@ def get_tasks(
 
 
 
-@app.post("/tasks")
+
+@app.post("/tasks", response_model=TaskResponse)
 def create_task(
-    title: str,
+    task: TaskCreate,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(get_current_user)
 ):
     new_task = models.Task(
-        title=title,
+        title=task.title,
         done=False,
         user_id=current_user.id
     )
@@ -153,7 +158,8 @@ def create_task(
 
 
 
-@app.get("/tasks/{task_id}")
+
+@app.get("/tasks/{task_id}", response_model=TaskResponse)
 def get_task(
     task_id: int,
     db: Session = Depends(get_db),
@@ -171,7 +177,7 @@ def get_task(
 
 
 
-@app.put("/tasks/{task_id}")
+@app.put("/tasks/{task_id}", response_model=TaskResponse)
 def update_task(
     task_id: int,
     title: str = None,
