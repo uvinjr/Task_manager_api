@@ -11,11 +11,23 @@ from datetime import datetime, timedelta, timezone
 import jwt
 
 
+from fastapi import Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+
 import os
 from dotenv import load_dotenv
 
 load_dotenv()
 
+
+SECRET_KEY = os.getenv("SECRET_KEY")
+
+if not SECRET_KEY:
+    raise RuntimeError("SECRET_KEY is missing. Check your .env file.")
+
+
+ALGORITHM = "HS256"
+ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 app = FastAPI()
@@ -62,12 +74,65 @@ def signup(user: UserCreate, db: Session = Depends(get_db)):
         "message": "User registered successfully"
     }
 
+
+security = HTTPBearer()
+
+def get_current_user(
+    credentials: HTTPAuthorizationCredentials = Depends(security),
+    db: Session = Depends(get_db)
+):
+    token = credentials.credentials
+
+    try:
+        payload = jwt.decode(
+            token,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        username = payload.get("sub")
+
+        if username is None:
+            raise HTTPException(
+                status_code=401,
+                detail="Invalid token"
+            )
+
+    except jwt.InvalidTokenError:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid or expired token"
+        )
+
+    user = db.query(models.User).filter(
+        models.User.username == username
+    ).first()
+
+    if user is None:
+        raise HTTPException(
+            status_code=401,
+            detail="User not found"
+        )
+
+    return user
+
+
+
 @app.get("/tasks")
-def get_tasks():
-    return tasks
+def get_tasks(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    return db.query(models.Task).all()
+
+
 
 @app.post("/tasks")
-def create_task(title: str, db: Session = Depends(get_db)):
+def create_task(
+    title: str,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     new_task = models.Task(title=title, done=False)
 
     db.add(new_task)
@@ -75,6 +140,7 @@ def create_task(title: str, db: Session = Depends(get_db)):
     db.refresh(new_task)
 
     return new_task
+
 
 @app.get("/tasks/{task_id}")
 def get_task(task_id: int, db: Session = Depends(get_db)):
@@ -124,14 +190,7 @@ def delete_task(task_id: int, db: Session = Depends(get_db)):
 
 
 
-SECRET_KEY = os.getenv("SECRET_KEY")
 
-if not SECRET_KEY:
-    raise RuntimeError("SECRET_KEY is missing. Check your .env file.")
-
-
-ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 @app.post("/login")
