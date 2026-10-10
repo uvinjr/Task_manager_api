@@ -2,6 +2,14 @@
 
 A RESTful Task Manager API built with **FastAPI, SQLite, and SQLAlchemy**. It supports user registration, secure login with JWT authentication, and task management with user-specific access control.
 
+## Live Demo
+
+**Live API Documentation:** [Task Manager API — Swagger UI](https://task-manager-api-1t8z.onrender.com/docs)
+
+The API is deployed on Render. Use the interactive Swagger UI to explore and test the available endpoints, including user registration, JWT authentication, and task management.
+
+**Note:** The free hosting instance may sleep after inactivity, so the first request can take longer. The current deployment uses SQLite without persistent disk storage, so database contents may not survive restarts or redeployments.
+
 ## Features
 
 - **User Registration:** Create an account with a securely hashed password.
@@ -125,7 +133,6 @@ This project demonstrates practical experience with REST API development, databa
 
 - Automated tests using Pytest
 - Pagination and filtering
-- Deployment to a hosting platform
 - Improved API error handling
 
 ## Author
