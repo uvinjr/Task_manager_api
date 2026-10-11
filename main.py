@@ -1,5 +1,8 @@
 from fastapi import FastAPI, HTTPException, Depends
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from pathlib import Path
 
 import models
 from database import engine, SessionLocal
@@ -16,6 +19,8 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 
 
 from schemas import TaskCreate, TaskResponse, TaskUpdate
+
+
 
 
 import os
@@ -35,6 +40,18 @@ ACCESS_TOKEN_EXPIRE_MINUTES = 30
 
 
 app = FastAPI()
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://127.0.0.1:5500",
+        "http://localhost:5500",
+    ],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 models.Base.metadata.create_all(bind=engine)
 
 def get_db():
@@ -258,3 +275,10 @@ def login(user: UserCreate, db: Session = Depends(get_db)):
         "access_token": token,
         "token_type": "bearer"
     }
+
+
+app.mount(
+    "/",
+    StaticFiles(directory=Path(__file__).parent / "frontend", html=True),
+    name="frontend"
+)
