@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f6f1">
+  <title>TaskManager</title>
+  <link rel="stylesheet" href="./styles.css">
+<script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="TaskManager home">
+        <span class="brand-mark" aria-hidden="true">T</span>
+        <span>TaskManager</span>
+      </a>
+      <div id="account-bar" class="account-bar" hidden>
+        <span id="account-name" class="account-name"></span>
+        <button id="logout-button" class="quiet-button" type="button">Sign out</button>
+      </div>
+    </header>
+
+    <main>
+      <section id="auth-view" class="auth-layout" aria-labelledby="auth-title">
+        <div class="auth-copy">
+          <p class="eyebrow">A clearer day starts here</p>
+          <h1 id="auth-title">Make room for<br><span>what matters.</span></h1>
+          <p class="auth-description">A calm place to collect your tasks, keep your focus, and see what you have finished.</p>
+          <div class="auth-rule" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        </div>
+
+        <div class="auth-panel">
+          <div class="auth-tabs" role="tablist" aria-label="Account access">
+            <button class="auth-tab is-selected" type="button" role="tab" aria-selected="true" data-mode="login">Sign in</button>
+            <button class="auth-tab" type="button" role="tab" aria-selected="false" data-mode="signup">Create account</button>
+          </div>
+          <h2 id="form-heading">Welcome back</h2>
+          <p id="form-subheading" class="muted">Pick up right where you left off.</p>
+          <form id="auth-form">
+            <label for="username">Username</label>
+            <input id="username" name="username" autocomplete="username" minlength="1" required>
+            <label for="password">Password</label>
+            <input id="password" name="password" type="password" autocomplete="current-password" minlength="1" required>
+            <button id="auth-submit" class="primary-button auth-submit" type="submit">Sign in <span aria-hidden="true">&rarr;</span></button>
+          </form>
+          <p id="auth-message" class="message" role="status" aria-live="polite"></p>
+        </div>
+      </section>
+
+      <section id="tasks-view" class="tasks-view" hidden aria-labelledby="tasks-heading">
+        <div class="page-heading">
+          <div>
+            <p class="eyebrow">Your personal workspace</p>
+            <h1 id="tasks-heading">Today, at your pace.</h1>
+          </div>
+          <div class="completion-count"><span id="completion-number">0</span><span>done</span></div>
+        </div>
+
+        <form id="task-form" class="task-composer">
+          <span class="composer-mark" aria-hidden="true">+</span>
+          <input id="task-title" name="title" maxlength="100" placeholder="Add a task to your list..." aria-label="New task title" required>
+          <button class="primary-button" type="submit">Add task <span aria-hidden="true">&rarr;</span></button>
+        </form>
+
+        <div class="list-toolbar">
+          <div>
+            <h2>Your list</h2>
+            <p id="task-summary" class="muted">Loading your tasks...</p>
+          </div>
+          <div class="filter-tabs" role="group" aria-label="Filter tasks">
+            <button class="filter-tab is-selected" type="button" data-filter="all" aria-pressed="true">All</button>
+            <button class="filter-tab" type="button" data-filter="active" aria-pressed="false">Active</button>
+            <button class="filter-tab" type="button" data-filter="done" aria-pressed="false">Done</button>
+          </div>
+        </div>
+
+        <div id="task-list" class="task-list" aria-live="polite"></div>
+        <p id="task-message" class="message" role="status" aria-live="polite"></p>
+      </section>
+    </main>
+    <footer class="footer"><span>TaskManager</span><span>One thing at a time.</span></footer>
+  </div>
+</body>
+</html>
